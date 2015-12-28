@@ -1,0 +1,8 @@
+name    'mikemimik-freecodecamp'
+version '1.0.0'
+source  'https://github.com/mikemimik/puppet-module-freecodecamp'
+author  'Michael Perrotte'
+license 'MIT'
+summary 'Puppet FreeCodeCamp Module'
+description 'FreeCodeCamp Provisioning Module for Puppet'
+progject_page 'https://github.com/mikemimik/puppet-module-freecodecamp'
