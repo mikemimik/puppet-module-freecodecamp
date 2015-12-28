@@ -43,7 +43,7 @@ class fccmodule(
   }
 
   file { 'rev-manifest':
-    path    => "${dir}/freecodecamp/rev-manifest.json",
+    path    => "${dir}/freecodecamp/server/rev-manifest.json",
     ensure  => present,
     group   => 'root',
     owner   => $user,
