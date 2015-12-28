@@ -42,6 +42,15 @@ class fccmodule(
     require => [Exec['clone_fcc']]
   }
 
+  file { 'rev-manifest':
+    path    => "${dir}/freecodecamp/rev-manifest.json",
+    ensure  => present,
+    group   => 'root',
+    owner   => $user,
+    content => "{}",
+    require => [Exec['clone_fcc']]
+  }
+
   exec { 'npm_install_babel_globally':
     user    => $user,
     command => "bash -c 'source ${dir}/.bashrc ; npm install -g babel@5.8.29'",
