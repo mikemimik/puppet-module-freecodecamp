@@ -1,5 +1,5 @@
 name    'mikemimik-freecodecamp'
-version '1.0.0'
+version '0.0.5'
 source  'https://github.com/mikemimik/puppet-module-freecodecamp'
 author  'Michael Perrotte'
 license 'MIT'
