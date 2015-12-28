@@ -51,12 +51,39 @@ class fccmodule(
     require => [Exec['clone_fcc']]
   }
 
-  exec { 'npm_install_babel_globally':
+  exec { 'npm_install':
     user    => $user,
-    command => "bash -c 'source ${dir}/.bashrc ; npm install -g babel@5.8.29'",
+    command => "bash -c 'source ${dir}/.bashrc ; npm install'",
     path    => $npm_path,
+    cwd     => "${dir}/freecodecamp",
     timeout => 0,
     require => [Class['nodejs'], Exec['limit_npm']]
+  }
+
+  exec { 'node_seed':
+    user    => $user,
+    command => "bash -c 'source ${dir}/.bashrc ; node seed'",
+    path    => $npm_path,
+    timeout => 0,
+    require => [
+      Class['nodejs'],
+      Exec['limit_npm'],
+      File['rev-manifest'],
+      Exec['npm_install']
+    ]
+  }
+
+  exec { 'node_seed_non-profit':
+    user    => $user,
+    command => "bash -c 'source ${dir}/.bashrc ; node seed/non-profit'",
+    path    => $npm_path,
+    timeout => 0,
+    require => [
+      Class['nodejs'],
+      Exec['limit_npm'],
+      File['rev-manifest'],
+      Exec['npm_install']
+    ]
   }
 
   # EXPERIMENTAL
