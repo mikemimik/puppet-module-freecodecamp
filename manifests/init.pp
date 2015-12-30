@@ -5,6 +5,8 @@ class fccmodule(
   $nvm_path     = undef,
   $default_user = undef
 ) {
+
+  # INFO: Local variables
   $version  = pick($node_version, '4.2.2')
   $dir      = pick($home_dir, '/home/vagrant')
   $bin      = pick($default_bin, '/usr/local/bin:/usr/bin:/bin')
@@ -16,6 +18,7 @@ class fccmodule(
   ])
   $user     = pick($default_user, 'vagrant')
 
+  # INFO: Resources
   exec { 'clone_fcc':
     user    => $user,
     command => "git clone --depth=1 https://github.com/freecodecamp/freecodecamp.git freecodecamp",
@@ -33,6 +36,72 @@ class fccmodule(
     require => [Class['nodejs']]
   }
 
+  exec { 'npm_install':
+    user    => $user,
+    command => "bash -c 'source ${dir}/.bashrc ; npm --loglevel=error install'",
+    path    => $npm_path,
+    cwd     => "${dir}/freecodecamp",
+    returns => [0,1],
+    timeout => 0,
+    require => [
+      Class['nodejs'],
+      Exec['limit_npm'],
+      Exec['clone_fcc']
+    ]
+  }
+
+  exec { 'npm_install_bower':
+    user    => $user,
+    command => "bash -c 'source ${dir}/.bashrc ; npm install -g bower'",
+    path    => $npm_path,
+    cwd     => "${dir}/freecodecamp",
+    timeout => 0,
+    require => [
+      Class['nodejs'],
+      Exec['limit_npm'],
+      Exec['clone_fcc']
+    ]
+  }
+
+  exec { 'npm_install_gulp':
+    user    => $user,
+    command => "bash -c 'source ${dir}/.bashrc ; npm install -g gulp'",
+    path    => $npm_path,
+    cwd     => "${dir}/freecodecamp",
+    timeout => 0,
+    require => [
+      Class['nodejs'],
+      Exec['limit_npm'],
+      Exec['clone_fcc']
+    ]
+  }
+
+  # INFO: bower has dep (configstore)
+  # INFO: configstore default save location is /home/root/.config
+  # TODO: fix this ^
+  file { 'permissions':
+    path    => '/home/root',
+    ensure  => directory,
+    group   => $user,
+    owner   => $user,
+    require => [Exec['npm_install_bower']]
+  }
+
+  exec { 'bower_install':
+    user    => $user,
+    command => "bash -c 'source ${dir}/.bashrc ; bower install --config.interactive=false'",
+    path    => $npm_path,
+    cwd     => "${dir}/freecodecamp",
+    timeout => 0,
+    require => [
+      Class['nodejs'],
+      Exec['limit_npm'],
+      Exec['clone_fcc'],
+      Exec['npm_install_bower'],
+      File['permissions']
+    ]
+  }
+
   file { 'fcc-env-file':
     path    => "${dir}/freecodecamp/.env",
     ensure  => present,
@@ -42,49 +111,57 @@ class fccmodule(
     require => [Exec['clone_fcc']]
   }
 
-  file { 'rev-manifest':
-    path    => "${dir}/freecodecamp/server/rev-manifest.json",
-    ensure  => present,
-    group   => 'root',
-    owner   => $user,
-    content => "{}",
-    require => [Exec['clone_fcc']]
-  }
-
-  exec { 'npm_install':
+  exec { 'npm_run_once':
     user    => $user,
-    command => "bash -c 'source ${dir}/.bashrc ; npm install'",
+    command => "bash -c 'source ${dir}/.bashrc ; npm run only-once'",
     path    => $npm_path,
     cwd     => "${dir}/freecodecamp",
     timeout => 0,
-    require => [Class['nodejs'], Exec['limit_npm']]
-  }
-
-  exec { 'node_seed':
-    user    => $user,
-    command => "bash -c 'source ${dir}/.bashrc ; node seed'",
-    path    => $npm_path,
-    timeout => 0,
     require => [
       Class['nodejs'],
       Exec['limit_npm'],
-      File['rev-manifest'],
-      Exec['npm_install']
+      Exec['clone_fcc'],
+      File['fcc-env-file'],
+      Exec['npm_install_bower']
     ]
   }
+  # file { 'rev-manifest':
+  #   path    => "${dir}/freecodecamp/server/rev-manifest.json",
+  #   ensure  => present,
+  #   group   => 'root',
+  #   owner   => $user,
+  #   content => "{}",
+  #   require => [Exec['clone_fcc']]
+  # }
 
-  exec { 'node_seed_non-profit':
-    user    => $user,
-    command => "bash -c 'source ${dir}/.bashrc ; node seed/non-profit'",
-    path    => $npm_path,
-    timeout => 0,
-    require => [
-      Class['nodejs'],
-      Exec['limit_npm'],
-      File['rev-manifest'],
-      Exec['npm_install']
-    ]
-  }
+  # exec { 'node_seed':
+  #   user    => $user,
+  #   command => "bash -c 'source ${dir}/.bashrc ; node seed'",
+  #   path    => $npm_path,
+  #   cwd     => "${dir}/freecodecamp",
+  #   timeout => 0,
+  #   require => [
+  #     Class['nodejs'],
+  #     Exec['limit_npm'],
+  #     File['rev-manifest'],
+  #     Exec['npm_install']
+  #   ]
+  # }
+
+  # exec { 'node_seed_non-profit':
+  #   user    => $user,
+  #   command => "bash -c 'source ${dir}/.bashrc ; node seed/nonprofits'",
+  #   path    => $npm_path,
+  #   cwd     => "${dir}/freecodecamp",
+  #   timeout => 0,
+  #   require => [
+  #     Class['nodejs'],
+  #     Exec['limit_npm'],
+  #     File['rev-manifest'],
+  #     Exec['npm_install'],
+  #     Exec['node_seed']
+  #   ]
+  # }
 
   # EXPERIMENTAL
   # exec { 'npm_install_bower':
